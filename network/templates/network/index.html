@@ -1,55 +1,49 @@
-{% extends "network/layout.html" %}
-{% load static %}
+{% extends "network/layout.html" %} {% load static %} {% block body %}
 
-{% block body %}
+<div id="all-posts">
+  {% if user.is_authenticated %}
+  <div id="compose-post" class="mb-5">
+    <form id="submit-post">
+      {% csrf_token %}
+      <input
+        name="compose-content"
+        id="compose-content"
+        class="form-control"
+        placeholder="What's happening?"
+        maxlength="280"
+        style="min-height: 50px"
+      ></input>
+      <button type="submit" style="float: right" class="btn btn-info">
+        Post
+      </button>
+    </form>
+  </div>
+  {% endif %}
 
-    <div id='all-posts'>
-        {% if user.is_authenticated %}                   
-            <div id='compose-post' class="mb-5" >
-                <form id='submit-post' action="{% url 'newPost' %}" method="post">
-                    {% csrf_token %}
-                    <textarea name='compose-content' class="form-control" placeholder="What's happening?" maxlength="280" style="min-height: 80px;"></textarea>
-                    <button type="submit" style="float: right;" class="btn btn-info">Post</button>
-                </form>
-            </div>
-        {% endif %}
+  <div id="posts">
+
+    <!-- <div class="card">
+      <div class="card-body">
+        <a href=""><h5 class="card-title">Card title</h5></a>
+        <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+        <i class="fa fa-heart-o" id='like'></i> 3
+        <p class="card-text"><small class="text-muted">Last updated 9 mins ago</small></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <a href=""><h5 class="card-title">Card title</h5></a>
+        <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+        <i class="fa fa-heart-o" id='like'></i> 0
+        <p class="card-text"><small class="text-muted">Last updated 21 mins ago</small></p>
+      </div>
+    </div> -->
     
-        <div id='posts' class="card-group">
-            <div class="card">
-                <div class="card-header">
-                  creator
-                </div>
-                <div class="card-body">
-                  <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-                  <i class="fa fa-heart-o" id='like'></i>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                  creator
-                </div>
-                <div class="card-body">
-                  <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-                  <i class="fa fa-heart-o" id='like'></i>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                  creator
-                </div>
-                <div class="card-body">
-                  <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-                  <i class="fa fa-heart-o" id='like'></i>
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
+</div>
 
-    <div id='following-posts'>
-        Following
-    </div>
-{% endblock %}
-
-{% block script %}
-    <script src="{% static 'network/script.js' %}"></script>
+<div id="following-posts">Following</div>
+{% endblock %} {% block script %}
+<script src="{% static 'network/script.js' %}"></script>
 {% endblock %}

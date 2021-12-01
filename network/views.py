@@ -6,6 +6,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
 
 from .models import User, Post, Profile
 
@@ -70,8 +71,19 @@ def register(request):
 @login_required
 def newPost(request):
     if request.method == "POST":
+        data = json.loads(request.body)
+        content = data.get("content", "")
         post = Post()
         post.creator = request.user
-        post.content = request.POST.get('compose-content')
+        post.content = content
         post.save()
-    return index(request)
+    return HttpResponseRedirect(reverse("index"))
+
+
+def loadPosts(request, page):
+    posts = Post.objects.order_by('-timestamp').all()
+    return JsonResponse({'posts': [post.serialize() for post in posts]}, safe=False)
+
+
+def pagination(posts):
+    paginator = Paginator(posts, 1)
