@@ -74,15 +74,49 @@ def newPost(request):
         data = json.loads(request.body)
         content = data.get("content", "")
         post = Post()
-        post.creator = request.user
+        post.creator = Profile.objects.get(user=request.user)
         post.content = content
         post.save()
+
     return HttpResponseRedirect(reverse("index"))
 
 
+def profile(request, userID):
+    profile = Profile.objects.get(id=userID)
+    profileData = Post.objects.order_by('-timestamp').filter(creator=userID)
+    return render(request, "network/profile.html", {
+        'profileData': [item.serialize() for item in profileData],
+        'profile': profile.serialize(request.user)
+    })
+
+
 def loadPosts(request, page):
-    posts = Post.objects.order_by('-timestamp').all()
+    if page == 'allPosts':
+        posts = Post.objects.order_by('-timestamp').all()
+    elif page == 'following':
+        return loadFollowingPosts(request)
     return JsonResponse({'posts': [post.serialize() for post in posts]}, safe=False)
+
+
+@login_required
+def loadFollowingPosts(request):
+    following = request.user.followedProfiles.all()
+    posts = Post.objects.order_by(
+        '-timestamp').filter(creator__in=following).all()
+    return JsonResponse({'posts': [post.serialize() for post in posts]}, safe=False)
+
+
+@csrf_exempt
+@login_required
+def handleFollow(request, userID):
+    if request.method == 'PUT':
+        profile = Profile.objects.get(id=userID)
+        if profile in request.user.followedProfiles.all():
+            profile.followers.remove(request.user)
+        else:
+            profile.followers.add(request.user)
+        profile.save()
+    return JsonResponse({'userID': userID}, safe=False)
 
 
 def pagination(posts):

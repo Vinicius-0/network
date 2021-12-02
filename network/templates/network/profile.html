@@ -1,0 +1,29 @@
+{% extends "network/layout.html" %} {% load static %} {% block body %}
+<input type="hidden" id="profileID" value={{profile.id}}>
+<div>
+  <div id='profile-header' class='container-fluid'>
+      <h1 class="display-1">{{profile.username}}</h1>
+      <h6 class="display-5">Followers - {{profile.followers}}</h1>
+      <h6 class="display-5">Following - {{profile.following}}</h1>
+      {% if  user.is_authenticated and user.username != profile.username%}
+        {% if profile.canFollow%}
+          <button type="button" class="btn btn-primary" id='follow' onclick="handleFollow('follow')" >Follow</button>
+        {% else %}
+          <button type="button" class="btn btn-info" id='unfollow' onclick="handleFollow('unfollow')">Unfollow</button>
+        {% endif %}
+      {% endif %}
+  </div>
+    {% for item in profileData%}
+    <div class="card">
+        <div class="card-body">
+          <a href=""><h5 class="card-title">{{item.creator}}</h5></a>
+          <p class="card-text">{{item.content}}</p>
+          <i class="fa fa-heart-o" id='like'></i> {{item.likes}}
+          <p class="card-text"><small class="text-muted">{{item.timestamp}}</small></p>
+        </div>
+      </div>
+    {% endfor %}
+</div>
+{% endblock %} {% block script %}
+<script src="{% static 'network/script.js' %}"></script>
+{% endblock %}

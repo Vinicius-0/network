@@ -1,29 +1,37 @@
 document.addEventListener("DOMContentLoaded", function () {
+  load_page("allPosts");
   // set pages
-  document
-    .querySelector("#allPosts-button")
-    .addEventListener("click", () => load_page("allPosts"));
-  document
-    .querySelector("#following-button")
-    .addEventListener("click", () => load_page("following"));
+  if (window.location.href.indexOf("profile") > -1) {
+    document
+      .querySelector("#allPosts-button")
+      .addEventListener("click", () =>
+        window.location.replace("http://127.0.0.1:8000")
+      );
+    document
+      .querySelector("#following-button")
+      .addEventListener("click", function () {
+        window.location.replace("http://127.0.0.1:8000");
+      });
+  } else {
+    document
+      .querySelector("#allPosts-button")
+      .addEventListener("click", () => load_page("allPosts"));
+    document
+      .querySelector("#following-button")
+      .addEventListener("click", () => load_page("following"));
+  }
 
   document
     .querySelector("#submit-post")
     .addEventListener("submit", () => newPost());
-  load_page("allPosts");
 });
 
 function load_page(page) {
-  if (page === "allPosts") {
-    document.querySelector("#all-posts").style.display = "block";
-    document.querySelector("#following-posts").style.display = "none";
-  } else {
-    document.querySelector("#all-posts").style.display = "none";
-    document.querySelector("#following-posts").style.display = "block";
-  }
   fetch(`/load/${page}`)
     .then((response) => response.json())
     .then((response) => {
+      console.log(response);
+      document.querySelector("#posts").innerHTML = "";
       response.posts.forEach((element) => {
         showPosts(element);
       });
@@ -51,7 +59,7 @@ function showPosts(post, mailbox) {
 
   // post title
   const a = document.createElement("a");
-  a.href = "";
+  a.href = `http://127.0.0.1:8000/profile/${post.creatorID}`;
   const title = document.createElement("h5");
   title.className = "card-title";
   title.innerHTML = post.creator;
@@ -73,6 +81,10 @@ function showPosts(post, mailbox) {
     handleLike("post");
     event.stopPropagation();
   });
+
+  const likes = document.createElement("a");
+  likes.innerHTML = post.likes;
+  postBody.appendChild(likes);
 
   // post timestamp
   const timestamp = document.createElement("p");
@@ -121,4 +133,13 @@ function newPost() {
       console.log("Error:", error);
     });
   return false;
+}
+
+function handleFollow(actualState) {
+  fetch(`/handleFollow/10`, {
+    method: "PUT",
+    body: JSON.stringify({
+      userID: document.getElementById("profileID").value,
+    }),
+  }).then((response) => console.log(response));
 }
