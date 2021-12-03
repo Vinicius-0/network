@@ -17,7 +17,7 @@ class Profile(models.Model):
 
     def serialize(self, user):
         return {
-            'id': self.user.id,
+            'id': self.id,
             'username': self.user.username,
             'followers': self.followers.count(),
             'following': self.user.followedProfiles.count(),
@@ -25,7 +25,7 @@ class Profile(models.Model):
         }
 
     def __str__(self):
-        return f"Profile - {self.user}"
+        return f"Profile - {self.user.id}"
 
 
 @receiver(post_save, sender=User)

@@ -135,11 +135,26 @@ function newPost() {
   return false;
 }
 
-function handleFollow(actualState) {
-  fetch(`/handleFollow/10`, {
+function handleFollow() {
+  const profileID = document.getElementById("profileID").value;
+  fetch(`/handleFollow`, {
     method: "PUT",
     body: JSON.stringify({
-      userID: document.getElementById("profileID").value,
+      profileID: profileID,
     }),
-  }).then((response) => console.log(response));
+  })
+    .then((response) => response.json())
+    .then((response) => {
+      console.log(response);
+      const actualState = response.actualState;
+      followButton = document.getElementById("follow-button");
+      followButton.innerHTML = actualState;
+      followButton.className =
+        actualState === "follow" ? "btn btn-danger" : "btn btn-info";
+      document.getElementById(
+        "followers"
+      ).innerHTML = `Followers - ${response.followers}`;
+      // localStorage.clear();
+      // location.reload();
+    });
 }

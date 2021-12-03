@@ -108,15 +108,18 @@ def loadFollowingPosts(request):
 
 @csrf_exempt
 @login_required
-def handleFollow(request, userID):
+def handleFollow(request):
     if request.method == 'PUT':
-        profile = Profile.objects.get(id=userID)
+        data = json.loads(request.body)
+        profile = Profile.objects.get(id=data.get('profileID'))
         if profile in request.user.followedProfiles.all():
+            actualState = 'Follow'
             profile.followers.remove(request.user)
         else:
+            actualState = 'Unfollow'
             profile.followers.add(request.user)
         profile.save()
-    return JsonResponse({'userID': userID}, safe=False)
+    return JsonResponse({'followers': profile.followers.count(), 'actualState': actualState}, status=200)
 
 
 def pagination(posts):
