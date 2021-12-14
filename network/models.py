@@ -21,11 +21,11 @@ class Profile(models.Model):
             'username': self.user.username,
             'followers': self.followers.count(),
             'following': self.user.followedProfiles.count(),
-            'canFollow': not user.is_anonymous and not self in user.followedProfiles.all()
+            'canFollow': not user.is_anonymous and self.user != user
         }
 
     def __str__(self):
-        return f"Profile - {self.user.id}"
+        return f"Profile - {self.id}"
 
 
 @receiver(post_save, sender=User)

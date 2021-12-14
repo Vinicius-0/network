@@ -1,53 +1,73 @@
 document.addEventListener("DOMContentLoaded", function () {
-  load_page("allPosts");
+  document.querySelector("#profile-header").style.display = "none";
+
   // set pages
-  if (window.location.href.indexOf("profile") > -1) {
-    document
-      .querySelector("#allPosts-button")
-      .addEventListener("click", () =>
-        window.location.replace("http://127.0.0.1:8000")
-      );
-    document
-      .querySelector("#following-button")
-      .addEventListener("click", function () {
-        window.location.replace("http://127.0.0.1:8000");
-      });
-  } else {
-    document
-      .querySelector("#allPosts-button")
-      .addEventListener("click", () => load_page("allPosts"));
-    document
-      .querySelector("#following-button")
-      .addEventListener("click", () => load_page("following"));
-  }
+  document
+    .querySelector("#allPosts-button")
+    .addEventListener("click", () => load_page("allPosts"));
+  document
+    .querySelector("#following-button")
+    .addEventListener("click", () => load_page("following"));
+
+  load_page("allPosts");
 
   document
     .querySelector("#submit-post")
     .addEventListener("submit", () => newPost());
 });
 
-function load_page(page) {
-  fetch(`/load/${page}`)
-    .then((response) => response.json())
-    .then((response) => {
-      console.log(response);
-      document.querySelector("#posts").innerHTML = "";
-      response.posts.forEach((element) => {
-        showPosts(element);
-      });
-    });
-}
-
-function handleLike() {
-  const actualClass = document.querySelector("#like").className;
-  if (actualClass == "fa fa-heart-o") {
-    document.querySelector("#like").className = "fa fa-heart";
+function load_page(page, profileID) {
+  if (page != "profile") {
+    document.querySelector("#profile-header").style.display = "none";
   } else {
-    document.querySelector("#like").className = "fa fa-heart-o";
+    document.querySelector("#profile-header").style.display = "block";
+  }
+
+  if (profileID) {
+    fetch(`/profile/${profileID}`)
+      .then((response) => response.json())
+      .then((response) => {
+        document.querySelector("#posts").innerHTML = "";
+        document.querySelector("#profile-username").innerHTML =
+          response.profile.username;
+        document.getElementById(
+          "following"
+        ).innerHTML = `Following - ${response.profile.following}`;
+        document.getElementById(
+          "followers"
+        ).innerHTML = `Following - ${response.profile.followers}`;
+        if (response.isFollowing) {
+          document.querySelector("#follow-button").innerHTML = "Unfollow";
+        } else {
+          document.querySelector("#follow-button").innerHTML = "Follow";
+        }
+        if (!response.profile.canFollow) {
+          document.querySelector("#follow-button").style.display = "none";
+        } else {
+          document.querySelector("#follow-button").style.display = "block";
+        }
+        response.posts.forEach((element) => {
+          showPosts(element);
+        });
+      })
+      .then((response) => {
+        document.querySelector("#follow-button").onclick = function () {
+          handleFollow(profileID);
+        };
+      });
+  } else {
+    fetch(`/load/${page}`)
+      .then((response) => response.json())
+      .then((response) => {
+        document.querySelector("#posts").innerHTML = "";
+        response.posts.forEach((element) => {
+          showPosts(element);
+        });
+      });
   }
 }
 
-function showPosts(post, mailbox) {
+function showPosts(post) {
   // create post div
   const postItem = document.createElement("div");
   postItem.className = "card";
@@ -59,7 +79,12 @@ function showPosts(post, mailbox) {
 
   // post title
   const a = document.createElement("a");
-  a.href = `http://127.0.0.1:8000/profile/${post.creatorID}`;
+  a.onclick = function () {
+    load_page("profile", post.creatorID);
+    document.querySelector("#profile-header").style.display = "block";
+  };
+  a.href = "javascript:void(0);";
+
   const title = document.createElement("h5");
   title.className = "card-title";
   title.innerHTML = post.creator;
@@ -75,10 +100,10 @@ function showPosts(post, mailbox) {
   // post icon
   const icon = document.createElement("i");
   icon.className = "fa fa-heart-o";
-  icon.id = "like";
+  icon.id = `like-${post.id}`;
   postBody.appendChild(icon);
   icon.addEventListener("click", function () {
-    handleLike("post");
+    handleLike(post);
     event.stopPropagation();
   });
 
@@ -94,27 +119,6 @@ function showPosts(post, mailbox) {
   small.innerHTML = post.timestamp;
   timestamp.appendChild(small);
   postBody.appendChild(timestamp);
-
-  // if (post.read === false) {
-  //   postItem.style.backgroundColor = "#fff";
-  // } else {
-  //   postItem.style.backgroundColor = "#ddd";
-  // }
-
-  // if (mailbox != "sent") {
-  //   // create archive button
-  //   const postButton = document.createElement("img");
-  //   postButton.id = "archive-button";
-  //   postButton.style.width = "30px";
-  //   postButton.title = "Archive";
-  //   postButton.src = "static/mail/archive_icon_128534.png";
-  //   postItem.append(postButton);
-
-  //   postButton.addEventListener("click", function () {
-  //     changeArchived(post);
-  //     event.stopPropagation();
-  //   });
-  // }
 
   postItem.appendChild(postBody);
   document.querySelector("#posts").append(postItem);
@@ -135,8 +139,7 @@ function newPost() {
   return false;
 }
 
-function handleFollow() {
-  const profileID = document.getElementById("profileID").value;
+function handleFollow(profileID) {
   fetch(`/handleFollow`, {
     method: "PUT",
     body: JSON.stringify({
@@ -154,7 +157,25 @@ function handleFollow() {
       document.getElementById(
         "followers"
       ).innerHTML = `Followers - ${response.followers}`;
-      // localStorage.clear();
-      // location.reload();
+    });
+}
+
+function handleLike(post) {
+  const actualClass = document.querySelector(`#like-${post.id}`).className;
+  if (actualClass == "fa fa-heart-o") {
+    document.querySelector(`#like-${post.id}`).className = "fa fa-heart";
+  } else {
+    document.querySelector(`#like-${post.id}`).className = "fa fa-heart-o";
+  }
+
+  fetch(`/handleLike`, {
+    method: "PUT",
+    body: JSON.stringify({
+      postId: post.id,
+    }),
+  })
+    .then((response) => response.json())
+    .then((response) => {
+      console.log(response);
     });
 }

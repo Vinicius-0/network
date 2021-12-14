@@ -1,12 +1,14 @@
-{% extends "network/layout.html" %} {% load static %} {% block body %}
+<!-- {% extends "network/layout.html" %} {% load static %} {% block body %}
 <input type="hidden" id="profileID" value={{profile.id}}>
 <div>
   <div id='profile-header' class='card'>
     <div style="display: flex; flex-direction: row; align-items: center; margin-left: auto; margin-right: auto;">
       <h1 class="display-1">{{profile.username}}</h1>
       <div style='flex-direction: column; margin-left: 100px;'>
+
         <h6 class="display-5" id='followers'>Followers - {{profile.followers}}</h1>
         <h6 class="display-5" id='following'>Following - {{profile.following}}</h1>
+
           {% if  user.is_authenticated and user.username != profile.username%}
             {% if profile.canFollow%}
               <button type="button" class="btn btn-info" id='follow-button' onclick="handleFollow()" >Follow</button>
@@ -14,15 +16,17 @@
               <button type="button" class="btn btn-info" id='follow-button' onclick="handleFollow()" >Unfollow</button>
             {% endif %}
           {% endif %}
+
         </div>
       </div>
   </div>
+
     {% for item in profileData%}
     <div class="card">
         <div class="card-body">
           <a href=""><h5 class="card-title">{{item.creator}}</h5></a>
           <p class="card-text">{{item.content}}</p>
-          <i class="fa fa-heart-o" id='like'></i> {{item.likes}}
+          <i class="fa fa-heart-o" id=`like-${item.id}`></i> {{item.likes}}
           <p class="card-text"><small class="text-muted">{{item.timestamp}}</small></p>
         </div>
       </div>
@@ -30,4 +34,4 @@
 </div>
 {% endblock %} {% block script %}
 <script src="{% static 'network/script.js' %}"></script>
-{% endblock %}
+{% endblock %} -->

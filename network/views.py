@@ -83,11 +83,12 @@ def newPost(request):
 
 def profile(request, userID):
     profile = Profile.objects.get(id=userID)
-    profileData = Post.objects.order_by('-timestamp').filter(creator=userID)
-    return render(request, "network/profile.html", {
-        'profileData': [item.serialize() for item in profileData],
-        'profile': profile.serialize(request.user)
-    })
+    posts = Post.objects.order_by('-timestamp').filter(creator=userID)
+    return JsonResponse({
+        'posts': [item.serialize() for item in posts],
+        'profile': profile.serialize(request.user),
+        'isFollowing': profile in request.user.followedProfiles.all(),
+    }, safe=False)
 
 
 def loadPosts(request, page):
@@ -120,6 +121,23 @@ def handleFollow(request):
             profile.followers.add(request.user)
         profile.save()
     return JsonResponse({'followers': profile.followers.count(), 'actualState': actualState}, status=200)
+
+
+@csrf_exempt
+@login_required
+def handleLike(request):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        # profile = Profile.objects.filter(user=request.user)
+        # post = Post.objects.get
+        # if profile in request.user.followedProfiles.all():
+        #     actualState = 'Follow'
+        #     profile.followers.remove(request.user)
+        # else:
+        #     actualState = 'Unfollow'
+        #     profile.followers.add(request.user)
+        # profile.save()
+    return JsonResponse({'post': data, 'profile': 'profile'}, status=200)
 
 
 def pagination(posts):

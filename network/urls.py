@@ -11,5 +11,6 @@ urlpatterns = [
     path("newPost", views.newPost, name="newPost"),
     path("profile/<int:userID>", views.profile, name="profile"),
     path("handleFollow", views.handleFollow, name="handleFollow"),
+    path("handleLike", views.handleLike, name="handleLike"),
     path("load/<str:page>", views.loadPosts, name="load"),
 ]
