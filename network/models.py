@@ -41,16 +41,18 @@ def save_user_profile(sender, instance, **kwargs):
 
 class Post(models.Model):
     creator = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    likes = models.ManyToManyField(Profile, blank=True, related_name='likes')
+    likes = models.ManyToManyField(
+        Profile, blank=True, related_name='allLikedPosts')
     content = models.CharField(max_length=280, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    def serialize(self):
+    def serialize(self, user):
         return {
             'id': self.id,
             'creator': self.creator.user.username,
             'creatorID': self.creator.id,
             'likes': self.likes.count(),
+            'liked': self in Profile.objects.get(user=user).allLikedPosts.all(),
             'content': self.content,
             'timestamp': self.timestamp.strftime("%b %d %Y, %I:%M %p")
         }

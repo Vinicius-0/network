@@ -99,7 +99,7 @@ function showPosts(post) {
 
   // post icon
   const icon = document.createElement("i");
-  icon.className = "fa fa-heart-o";
+  icon.className = post.liked ? "fa fa-heart" : "fa fa-heart-o";
   icon.id = `like-${post.id}`;
   postBody.appendChild(icon);
   icon.addEventListener("click", function () {
@@ -108,7 +108,8 @@ function showPosts(post) {
   });
 
   const likes = document.createElement("a");
-  likes.innerHTML = post.likes;
+  likes.id = `likes-${post.id}`;
+  likes.innerHTML = ` ${post.likes}`;
   postBody.appendChild(likes);
 
   // post timestamp
@@ -171,11 +172,14 @@ function handleLike(post) {
   fetch(`/handleLike`, {
     method: "PUT",
     body: JSON.stringify({
-      postId: post.id,
+      postID: post.id,
     }),
   })
     .then((response) => response.json())
     .then((response) => {
       console.log(response);
+      document.querySelector(
+        `#likes-${post.id}`
+      ).innerHTML = ` ${response.likesCount}`;
     });
 }

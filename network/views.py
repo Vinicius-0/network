@@ -85,7 +85,7 @@ def profile(request, userID):
     profile = Profile.objects.get(id=userID)
     posts = Post.objects.order_by('-timestamp').filter(creator=userID)
     return JsonResponse({
-        'posts': [item.serialize() for item in posts],
+        'posts': [item.serialize(request.user) for item in posts],
         'profile': profile.serialize(request.user),
         'isFollowing': profile in request.user.followedProfiles.all(),
     }, safe=False)
@@ -96,7 +96,7 @@ def loadPosts(request, page):
         posts = Post.objects.order_by('-timestamp').all()
     elif page == 'following':
         return loadFollowingPosts(request)
-    return JsonResponse({'posts': [post.serialize() for post in posts]}, safe=False)
+    return JsonResponse({'posts': [post.serialize(request.user) for post in posts]}, safe=False)
 
 
 @login_required
@@ -104,7 +104,7 @@ def loadFollowingPosts(request):
     following = request.user.followedProfiles.all()
     posts = Post.objects.order_by(
         '-timestamp').filter(creator__in=following).all()
-    return JsonResponse({'posts': [post.serialize() for post in posts]}, safe=False)
+    return JsonResponse({'posts': [post.serialize(request.user) for post in posts]}, safe=False)
 
 
 @csrf_exempt
@@ -128,16 +128,16 @@ def handleFollow(request):
 def handleLike(request):
     if request.method == 'PUT':
         data = json.loads(request.body)
-        # profile = Profile.objects.filter(user=request.user)
-        # post = Post.objects.get
-        # if profile in request.user.followedProfiles.all():
-        #     actualState = 'Follow'
-        #     profile.followers.remove(request.user)
-        # else:
-        #     actualState = 'Unfollow'
-        #     profile.followers.add(request.user)
-        # profile.save()
-    return JsonResponse({'post': data, 'profile': 'profile'}, status=200)
+        post = Post.objects.get(id=data.get('postID'))
+        profile = Profile.objects.get(user=request.user)
+        if post in profile.allLikedPosts.all():
+            post.likes.remove(profile)
+            actualState = False
+        else:
+            actualState = True
+            post.likes.add(profile)
+        post.save()
+    return JsonResponse({'liked': actualState, 'likesCount': post.likes.count()}, status=200)
 
 
 def pagination(posts):
