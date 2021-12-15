@@ -16,7 +16,8 @@ document.addEventListener("DOMContentLoaded", function () {
     .addEventListener("submit", () => newPost());
 });
 
-function load_page(page, profileID) {
+function load_page(page, profileID, page_number) {
+  const pageNumber = page_number ? page_number : 1;
   if (page != "profile") {
     document.querySelector("#profile-header").style.display = "none";
   } else {
@@ -24,7 +25,7 @@ function load_page(page, profileID) {
   }
 
   if (profileID) {
-    fetch(`/profile/${profileID}`)
+    fetch(`/profile/${profileID}/${pageNumber}`)
       .then((response) => response.json())
       .then((response) => {
         document.querySelector("#posts").innerHTML = "";
@@ -49,6 +50,12 @@ function load_page(page, profileID) {
         response.posts.forEach((element) => {
           showPosts(element);
         });
+        buildPaginator(
+          "profile",
+          response.numberOfPages,
+          profileID,
+          pageNumber
+        );
       })
       .then((response) => {
         document.querySelector("#follow-button").onclick = function () {
@@ -56,15 +63,17 @@ function load_page(page, profileID) {
         };
       });
   } else {
-    fetch(`/load/${page}`)
+    fetch(`/load/${page}/${pageNumber}`)
       .then((response) => response.json())
       .then((response) => {
         document.querySelector("#posts").innerHTML = "";
         response.posts.forEach((element) => {
           showPosts(element);
         });
+        buildPaginator(page, response.numberOfPages, null, pageNumber);
       });
   }
+  window.scrollTo(0, 0);
 }
 
 function showPosts(post) {
@@ -182,4 +191,64 @@ function handleLike(post) {
         `#likes-${post.id}`
       ).innerHTML = ` ${response.likesCount}`;
     });
+}
+
+function buildPaginator(page, numPages, profileID, pageNumber) {
+  const pagination = document.querySelector("#pagination");
+
+  pagination.innerHTML = "";
+  console.log(page);
+  if (pageNumber > 1) {
+    const li = document.createElement("li");
+    li.className = "page-item";
+    const a = document.createElement("a");
+    a.className = "page-link";
+    a.innerHTML = "Previous";
+    a.onclick = function () {
+      if (profileID) {
+        load_page(page, profileID, pageNumber - 1);
+      } else {
+        load_page(page, null, pageNumber - 1);
+      }
+    };
+    li.appendChild(a);
+    pagination.appendChild(li);
+  }
+
+  if (numPages > 1) {
+    for (let i = 0; i < numPages; i++) {
+      const li = document.createElement("li");
+      li.className = i + 1 == pageNumber ? "page-item active" : "page-item";
+      const a = document.createElement("a");
+      a.className = "page-link";
+      a.innerHTML = i + 1;
+      a.onclick = function () {
+        if (profileID) {
+          load_page(page, profileID, i + 1);
+        } else {
+          load_page(page, null, i + 1);
+        }
+      };
+      li.appendChild(a);
+      pagination.appendChild(li);
+    }
+  }
+
+  if (pageNumber < numPages) {
+    const li = document.createElement("li");
+    li.className = "page-item";
+    const a = document.createElement("a");
+    a.className = "page-link";
+    a.innerHTML = "Next";
+    a.onclick = function () {
+      if (profileID) {
+        load_page(page, profileID, pageNumber + 1);
+      } else {
+        load_page(page, null, pageNumber + 1);
+      }
+      document.querySelector("#profile-header").style.display = "block";
+    };
+    li.appendChild(a);
+    pagination.appendChild(li);
+  }
 }

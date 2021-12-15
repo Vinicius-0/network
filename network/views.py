@@ -1,4 +1,5 @@
 import json
+import math
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -81,30 +82,37 @@ def newPost(request):
     return HttpResponseRedirect(reverse("index"))
 
 
-def profile(request, userID):
+def profile(request, userID, pageNumber):
     profile = Profile.objects.get(id=userID)
     posts = Post.objects.order_by('-timestamp').filter(creator=userID)
+    paginator = pagination(posts)
+    posts = paginator.get_page(pageNumber)
     return JsonResponse({
         'posts': [item.serialize(request.user) for item in posts],
         'profile': profile.serialize(request.user),
         'isFollowing': profile in request.user.followedProfiles.all(),
+        'numberOfPages': paginator.num_pages
     }, safe=False)
 
 
-def loadPosts(request, page):
+def loadPosts(request, page, pageNumber):
     if page == 'allPosts':
         posts = Post.objects.order_by('-timestamp').all()
+        paginator = pagination(posts)
+        posts = paginator.get_page(pageNumber)
     elif page == 'following':
-        return loadFollowingPosts(request)
-    return JsonResponse({'posts': [post.serialize(request.user) for post in posts]}, safe=False)
+        return loadFollowingPosts(request, pageNumber)
+    return JsonResponse({'posts': [post.serialize(request.user) for post in posts], 'numberOfPages': paginator.num_pages}, safe=False)
 
 
 @login_required
-def loadFollowingPosts(request):
+def loadFollowingPosts(request, pageNumber):
     following = request.user.followedProfiles.all()
     posts = Post.objects.order_by(
         '-timestamp').filter(creator__in=following).all()
-    return JsonResponse({'posts': [post.serialize(request.user) for post in posts]}, safe=False)
+    paginator = pagination(posts)
+    posts = paginator.get_page(pageNumber)
+    return JsonResponse({'posts': [post.serialize(request.user) for post in posts], 'numberOfPages': paginator.num_pages}, safe=False)
 
 
 @csrf_exempt
@@ -141,4 +149,5 @@ def handleLike(request):
 
 
 def pagination(posts):
-    paginator = Paginator(posts, 1)
+    paginator = Paginator(posts, 10)
+    return paginator
