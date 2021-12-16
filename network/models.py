@@ -21,11 +21,12 @@ class Profile(models.Model):
             'username': self.user.username,
             'followers': self.followers.count(),
             'following': self.user.followedProfiles.count(),
+            'isFollowing': not user.is_anonymous and self in user.followedProfiles.all(),
             'canFollow': not user.is_anonymous and self.user != user
         }
 
     def __str__(self):
-        return f"Profile - {self.id}"
+        return f"{self.user.username} - (id = {self.id})"
 
 
 @receiver(post_save, sender=User)
@@ -52,7 +53,10 @@ class Post(models.Model):
             'creator': self.creator.user.username,
             'creatorID': self.creator.id,
             'likes': self.likes.count(),
-            'liked': self in Profile.objects.get(user=user).allLikedPosts.all(),
+            'liked': not user.is_anonymous and self in Profile.objects.get(user=user).allLikedPosts.all(),
             'content': self.content,
             'timestamp': self.timestamp.strftime("%b %d %Y, %I:%M %p")
         }
+
+    def __str__(self):
+        return f"{self.creator.user.username} - {self.content}"

@@ -9,12 +9,14 @@ document.addEventListener("DOMContentLoaded", function () {
     .querySelector("#following-button")
     .addEventListener("click", () => load_page("following"));
 
-  load_page("allPosts");
-
   document
     .querySelector("#submit-post")
     .addEventListener("submit", () => newPost());
 });
+
+window.onload = function () {
+  document.querySelector("#allPosts-button").click();
+};
 
 function load_page(page, profileID, page_number) {
   const pageNumber = page_number ? page_number : 1;
@@ -37,18 +39,18 @@ function load_page(page, profileID, page_number) {
         document.getElementById(
           "followers"
         ).innerHTML = `Following - ${response.profile.followers}`;
-        if (response.isFollowing) {
+        if (response.profile.isFollowing) {
           document.querySelector("#follow-button").innerHTML = "Unfollow";
         } else {
           document.querySelector("#follow-button").innerHTML = "Follow";
         }
-        if (!response.profile.canFollow) {
-          document.querySelector("#follow-button").style.display = "none";
-        } else {
+        if (response.profile.canFollow) {
           document.querySelector("#follow-button").style.display = "block";
+        } else {
+          document.querySelector("#follow-button").style.display = "none";
         }
         response.posts.forEach((element) => {
-          showPosts(element);
+          showPosts(element, response.user);
         });
         buildPaginator(
           "profile",
@@ -68,7 +70,7 @@ function load_page(page, profileID, page_number) {
       .then((response) => {
         document.querySelector("#posts").innerHTML = "";
         response.posts.forEach((element) => {
-          showPosts(element);
+          showPosts(element, response.user);
         });
         buildPaginator(page, response.numberOfPages, null, pageNumber);
       });
@@ -76,7 +78,7 @@ function load_page(page, profileID, page_number) {
   window.scrollTo(0, 0);
 }
 
-function showPosts(post) {
+function showPosts(post, user) {
   // create post div
   const postItem = document.createElement("div");
   postItem.className = "card";
@@ -100,10 +102,56 @@ function showPosts(post) {
   a.appendChild(title);
   postBody.appendChild(a);
 
+  // post - edit
+  if (post.creator == user) {
+    const editDiv = document.createElement("div");
+    editDiv.style.display = "none";
+    editDiv.id = `edit-form-${post.id}`;
+    const editInput = document.createElement("textarea");
+    editInput.className = "form-control";
+    editInput.value = post.content;
+    editDiv.appendChild(editInput);
+
+    const editButton = document.createElement("button");
+    editButton.innerHTML = "Save";
+    editButton.className = "btn btn-info";
+    editButton.onclick = function () {
+      document.querySelector(`#post-content-${post.id}`).innerHTML =
+        editInput.value;
+      document.querySelector(`#post-content-${post.id}`).style.display =
+        "block";
+      document.querySelector(`#edit-button-${post.id}`).style.display = "block";
+      document.querySelector(`#edit-form-${post.id}`).style.display = "none";
+
+      fetch(`/editPost`, {
+        method: "PUT",
+        body: JSON.stringify({
+          postID: post.id,
+          content: editInput.value,
+        }),
+      });
+    };
+    editDiv.appendChild(editButton);
+
+    const edit = document.createElement("a");
+    edit.href = "javascript:void(0);";
+    edit.id = `edit-button-${post.id}`;
+    edit.className = "card-text";
+    edit.innerHTML = "edit";
+    edit.onclick = function () {
+      document.querySelector(`#post-content-${post.id}`).style.display = "none";
+      document.querySelector(`#edit-button-${post.id}`).style.display = "none";
+      document.querySelector(`#edit-form-${post.id}`).style.display = "block";
+    };
+    postBody.appendChild(editDiv);
+    postBody.appendChild(edit);
+  }
+
   // post content
   const content = document.createElement("p");
   content.className = "card-text";
   content.innerHTML = post.content;
+  content.id = `post-content-${post.id}`;
   postBody.appendChild(content);
 
   // post icon
@@ -158,7 +206,6 @@ function handleFollow(profileID) {
   })
     .then((response) => response.json())
     .then((response) => {
-      console.log(response);
       const actualState = response.actualState;
       followButton = document.getElementById("follow-button");
       followButton.innerHTML = actualState;
@@ -186,7 +233,6 @@ function handleLike(post) {
   })
     .then((response) => response.json())
     .then((response) => {
-      console.log(response);
       document.querySelector(
         `#likes-${post.id}`
       ).innerHTML = ` ${response.likesCount}`;
@@ -197,7 +243,6 @@ function buildPaginator(page, numPages, profileID, pageNumber) {
   const pagination = document.querySelector("#pagination");
 
   pagination.innerHTML = "";
-  console.log(page);
   if (pageNumber > 1) {
     const li = document.createElement("li");
     li.className = "page-item";
@@ -246,7 +291,6 @@ function buildPaginator(page, numPages, profileID, pageNumber) {
       } else {
         load_page(page, null, pageNumber + 1);
       }
-      document.querySelector("#profile-header").style.display = "block";
     };
     li.appendChild(a);
     pagination.appendChild(li);

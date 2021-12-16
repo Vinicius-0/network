@@ -13,4 +13,5 @@ urlpatterns = [
     path("handleFollow", views.handleFollow, name="handleFollow"),
     path("handleLike", views.handleLike, name="handleLike"),
     path("load/<str:page>/<int:pageNumber>", views.loadPosts, name="load"),
+    path('editPost', views.editPost, name='editPost')
 ]

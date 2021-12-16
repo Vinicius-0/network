@@ -90,8 +90,8 @@ def profile(request, userID, pageNumber):
     return JsonResponse({
         'posts': [item.serialize(request.user) for item in posts],
         'profile': profile.serialize(request.user),
-        'isFollowing': profile in request.user.followedProfiles.all(),
-        'numberOfPages': paginator.num_pages
+        'numberOfPages': paginator.num_pages,
+        'user': request.user.username
     }, safe=False)
 
 
@@ -102,7 +102,7 @@ def loadPosts(request, page, pageNumber):
         posts = paginator.get_page(pageNumber)
     elif page == 'following':
         return loadFollowingPosts(request, pageNumber)
-    return JsonResponse({'posts': [post.serialize(request.user) for post in posts], 'numberOfPages': paginator.num_pages}, safe=False)
+    return JsonResponse({'posts': [post.serialize(request.user) for post in posts], 'numberOfPages': paginator.num_pages, 'user': request.user.username}, safe=False)
 
 
 @login_required
@@ -112,7 +112,7 @@ def loadFollowingPosts(request, pageNumber):
         '-timestamp').filter(creator__in=following).all()
     paginator = pagination(posts)
     posts = paginator.get_page(pageNumber)
-    return JsonResponse({'posts': [post.serialize(request.user) for post in posts], 'numberOfPages': paginator.num_pages}, safe=False)
+    return JsonResponse({'posts': [post.serialize(request.user) for post in posts], 'numberOfPages': paginator.num_pages, 'user': request.user.username}, safe=False)
 
 
 @csrf_exempt
@@ -151,3 +151,17 @@ def handleLike(request):
 def pagination(posts):
     paginator = Paginator(posts, 10)
     return paginator
+
+
+@csrf_exempt
+@login_required
+def editPost(request):
+    if request.method == "PUT":
+        data = json.loads(request.body)
+        postID = data.get('postID', '')
+        content = data.get("content", "")
+        post = Post.objects.get(id=postID)
+        post.content = content
+        post.save()
+
+    return JsonResponse(post=post, status=200)
